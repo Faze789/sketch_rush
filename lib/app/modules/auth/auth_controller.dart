@@ -72,6 +72,54 @@ class AuthController extends GetxController {
     await prefs.setString(AppConstants.keyAvatarColor, avatarColor.value);
   }
 
+  // --- Input Validation ---
+
+  /// Returns null if valid, or an error message string.
+  String? validateEmail(String? email) {
+    if (email == null || email.trim().isEmpty) {
+      return 'Email is required';
+    }
+    if (!GetUtils.isEmail(email.trim())) {
+      return 'Enter a valid email address';
+    }
+    return null;
+  }
+
+  String? validatePassword(String? password) {
+    if (password == null || password.isEmpty) {
+      return 'Password is required';
+    }
+    if (password.length < 6) {
+      return 'Password must be at least 6 characters';
+    }
+    return null;
+  }
+
+  String? validateConfirmPassword(String? password, String? confirm) {
+    if (confirm == null || confirm.isEmpty) {
+      return 'Please confirm your password';
+    }
+    if (confirm != password) {
+      return 'Passwords do not match';
+    }
+    return null;
+  }
+
+  String? validateDisplayName(String? name) {
+    if (name == null || name.trim().isEmpty) {
+      return 'Display name is required';
+    }
+    if (name.trim().length < 2) {
+      return 'Name must be at least 2 characters';
+    }
+    if (name.trim().length > 20) {
+      return 'Name must be 20 characters or less';
+    }
+    return null;
+  }
+
+  // --- Anonymous Sign In ---
+
   Future<bool> signInAnonymously({
     required String name,
     int? avatar,
@@ -102,6 +150,122 @@ class AuthController extends GetxController {
     }
   }
 
+  // --- Email/Password Sign Up ---
+
+  Future<bool> signUpWithEmail({
+    required String email,
+    required String password,
+    required String name,
+    int? avatar,
+    String? color,
+  }) async {
+    try {
+      isLoading.value = true;
+      displayName.value = name;
+      if (avatar != null) avatarIndex.value = avatar;
+      if (color != null) avatarColor.value = color;
+
+      final response = await _authProvider.signUpWithEmail(
+        email: email.trim(),
+        password: password,
+        displayName: name,
+      );
+
+      if (response.user == null) {
+        Get.snackbar('Error', 'Sign up failed. Please try again.');
+        return false;
+      }
+
+      await _savePreferences();
+
+      // Create player profile
+      await _authProvider.ensurePlayerProfile(
+        displayName: name,
+        avatarIndex: avatarIndex.value,
+        avatarColor: avatarColor.value,
+      );
+
+      return true;
+    } on AuthException catch (e) {
+      Get.snackbar('Sign Up Failed', e.message);
+      return false;
+    } catch (e) {
+      Get.snackbar('Error', 'An unexpected error occurred.');
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // --- Email/Password Sign In ---
+
+  Future<bool> signInWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      isLoading.value = true;
+
+      final response = await _authProvider.signInWithEmail(
+        email: email.trim(),
+        password: password,
+      );
+
+      if (response.user == null) {
+        Get.snackbar('Error', 'Sign in failed. Please try again.');
+        return false;
+      }
+
+      // Restore display name from user metadata
+      final metadata = response.user!.userMetadata;
+      final name = metadata?['display_name'] as String? ?? '';
+      if (name.isNotEmpty) {
+        displayName.value = name;
+      }
+
+      await _savePreferences();
+
+      // Ensure player profile exists (first login on new device)
+      if (displayName.value.isNotEmpty) {
+        await _authProvider.ensurePlayerProfile(
+          displayName: displayName.value,
+          avatarIndex: avatarIndex.value,
+          avatarColor: avatarColor.value,
+        );
+      }
+
+      return true;
+    } on AuthException catch (e) {
+      Get.snackbar('Sign In Failed', e.message);
+      return false;
+    } catch (e) {
+      Get.snackbar('Error', 'An unexpected error occurred.');
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // --- Forgot Password ---
+
+  Future<bool> resetPassword(String email) async {
+    try {
+      isLoading.value = true;
+      await _authProvider.resetPassword(email.trim());
+      return true;
+    } on AuthException catch (e) {
+      Get.snackbar('Error', e.message);
+      return false;
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to send reset email.');
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // --- Profile Update ---
+
   Future<void> updateProfile({String? name, int? avatar, String? color}) async {
     try {
       if (name != null) displayName.value = name;
@@ -118,6 +282,8 @@ class AuthController extends GetxController {
       Get.snackbar('Error', 'Failed to update profile: ${e.toString()}');
     }
   }
+
+  // --- Sign Out ---
 
   Future<void> signOut() async {
     await _authProvider.signOut();

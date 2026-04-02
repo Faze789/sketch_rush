@@ -3,12 +3,31 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../lobby_controller.dart';
 
-class JoinRoomDialog extends GetView<LobbyController> {
+class JoinRoomDialog extends StatefulWidget {
   const JoinRoomDialog({super.key});
 
   @override
+  State<JoinRoomDialog> createState() => _JoinRoomDialogState();
+}
+
+class _JoinRoomDialogState extends State<JoinRoomDialog> {
+  late final TextEditingController codeController;
+
+  @override
+  void initState() {
+    super.initState();
+    codeController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    codeController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final codeController = TextEditingController();
+    final controller = Get.find<LobbyController>();
 
     return Padding(
       padding: EdgeInsets.only(

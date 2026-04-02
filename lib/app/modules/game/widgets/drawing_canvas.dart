@@ -162,5 +162,10 @@ class _CanvasPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _CanvasPainter oldDelegate) => true;
+  bool shouldRepaint(covariant _CanvasPainter oldDelegate) {
+    return strokes.length != oldDelegate.strokes.length ||
+        currentStroke != oldDelegate.currentStroke ||
+        canvasWidth != oldDelegate.canvasWidth ||
+        canvasHeight != oldDelegate.canvasHeight;
+  }
 }

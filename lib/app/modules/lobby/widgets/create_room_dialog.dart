@@ -3,17 +3,41 @@ import 'package:get/get.dart';
 import '../../../core/constants/game_constants.dart';
 import '../lobby_controller.dart';
 
-class CreateRoomDialog extends GetView<LobbyController> {
+class CreateRoomDialog extends StatefulWidget {
   const CreateRoomDialog({super.key});
 
   @override
+  State<CreateRoomDialog> createState() => _CreateRoomDialogState();
+}
+
+class _CreateRoomDialogState extends State<CreateRoomDialog> {
+  late final TextEditingController nameController;
+  late final RxInt maxPlayers;
+  late final RxInt totalRounds;
+  late final RxInt turnDuration;
+  late final RxString difficulty;
+  late final RxBool isPublic;
+
+  @override
+  void initState() {
+    super.initState();
+    nameController = TextEditingController(text: 'SketchRush Room');
+    maxPlayers = GameConstants.defaultMaxPlayers.obs;
+    totalRounds = GameConstants.defaultTotalRounds.obs;
+    turnDuration = GameConstants.defaultTurnDuration.obs;
+    difficulty = 'medium'.obs;
+    isPublic = true.obs;
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final nameController = TextEditingController(text: 'SketchRush Room');
-    final maxPlayers = GameConstants.defaultMaxPlayers.obs;
-    final totalRounds = GameConstants.defaultTotalRounds.obs;
-    final turnDuration = GameConstants.defaultTurnDuration.obs;
-    final difficulty = 'medium'.obs;
-    final isPublic = true.obs;
+    final controller = Get.find<LobbyController>();
 
     return Padding(
       padding: EdgeInsets.only(

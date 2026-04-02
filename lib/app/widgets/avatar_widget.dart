@@ -29,9 +29,17 @@ class AvatarWidget extends StatelessWidget {
     Icons.child_care,
   ];
 
+  static Color _parseHexColor(String hex) {
+    try {
+      return Color(int.parse(hex.replaceFirst('#', '0xFF')));
+    } catch (_) {
+      return const Color(0xFF6C5CE7);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final bgColor = Color(int.parse(color.replaceFirst('#', '0xFF')));
+    final bgColor = _parseHexColor(color);
     final iconIndex = index.clamp(0, _avatarIcons.length - 1);
 
     return Container(
