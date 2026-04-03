@@ -61,10 +61,15 @@ class LobbyController extends GetxController {
       });
 
       // Auto-join as host
-      await _roomProvider.joinRoom(
+      final joinResult = await _roomProvider.joinRoom(
         roomCode: room.roomCode,
         playerId: playerId,
       );
+
+      if (joinResult['error'] != null) {
+        Get.snackbar('Error', joinResult['error'].toString());
+        return;
+      }
 
       Get.toNamed(AppRoutes.room, arguments: {'room_id': room.id});
     } catch (e) {
@@ -84,7 +89,7 @@ class LobbyController extends GetxController {
       }
 
       final result = await _roomProvider.joinRoom(
-        roomCode: code.toUpperCase(),
+        roomCode: code.trim().toUpperCase(),
         playerId: playerId,
       );
 

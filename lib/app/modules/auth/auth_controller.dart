@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -39,7 +40,9 @@ class AuthController extends GetxController {
     _authSub = _authProvider.authStateChanges.listen((authState) {
       currentUser.value = authState.session?.user;
       isAuthenticated.value = authState.session?.user != null;
-    }, onError: (_) {});
+    }, onError: (error) {
+      debugPrint('Auth state stream error: $error');
+    });
   }
 
   /// Re-sync auth state from the current Supabase session.
@@ -176,6 +179,16 @@ class AuthController extends GetxController {
         return false;
       }
 
+      // Check if email confirmation is required
+      if (response.user!.emailConfirmedAt == null) {
+        Get.snackbar(
+          'Verify Email',
+          'Please check your inbox and verify your email before signing in.',
+          duration: const Duration(seconds: 5),
+        );
+        return false;
+      }
+
       await _savePreferences();
 
       // Create player profile
@@ -221,6 +234,13 @@ class AuthController extends GetxController {
       final name = metadata?['display_name'] as String? ?? '';
       if (name.isNotEmpty) {
         displayName.value = name;
+      } else if (displayName.value.isEmpty) {
+        // Fallback: restore from shared preferences
+        final prefs = await SharedPreferences.getInstance();
+        final savedName = prefs.getString(AppConstants.keyDisplayName) ?? '';
+        if (savedName.isNotEmpty) {
+          displayName.value = savedName;
+        }
       }
 
       await _savePreferences();
@@ -286,10 +306,16 @@ class AuthController extends GetxController {
   // --- Sign Out ---
 
   Future<void> signOut() async {
-    await _authProvider.signOut();
+    try {
+      await _authProvider.signOut();
+    } catch (e) {
+      debugPrint('Sign out error: $e');
+    }
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
     displayName.value = '';
+    isAuthenticated.value = false;
+    currentUser.value = null;
     Get.offAllNamed(AppRoutes.auth);
   }
 

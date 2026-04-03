@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'app_routes.dart';
+import 'auth_middleware.dart';
 import '../modules/splash/splash_view.dart';
 import '../modules/splash/splash_binding.dart';
 import '../modules/auth/auth_view.dart';
@@ -29,16 +30,19 @@ class AppPages {
       name: AppRoutes.lobby,
       page: () => const LobbyView(),
       binding: LobbyBinding(),
+      middlewares: [AuthMiddleware()],
     ),
     GetPage(
       name: AppRoutes.room,
       page: () => const RoomView(),
       binding: RoomBinding(),
+      middlewares: [AuthMiddleware()],
     ),
     GetPage(
       name: AppRoutes.game,
       page: () => const GameView(),
       binding: GameBinding(),
+      middlewares: [AuthMiddleware()],
     ),
   ];
 }

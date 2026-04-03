@@ -15,10 +15,11 @@ class ChatController extends GetxController {
   static const int _windowMs = 2000;
 
   bool get canGuess {
-    _guessTimestamps.removeWhere(
-      (t) => DateTime.now().difference(t).inMilliseconds > _windowMs,
-    );
-    return _guessTimestamps.length < _maxGuessesPerWindow;
+    final now = DateTime.now();
+    final recentCount = _guessTimestamps
+        .where((t) => now.difference(t).inMilliseconds <= _windowMs)
+        .length;
+    return recentCount < _maxGuessesPerWindow;
   }
 
   void addMessage(ChatMessageModel message) {
@@ -63,6 +64,9 @@ class ChatController extends GetxController {
   }
 
   void recordGuessAttempt() {
+    _guessTimestamps.removeWhere(
+      (t) => DateTime.now().difference(t).inMilliseconds > _windowMs,
+    );
     _guessTimestamps.add(DateTime.now());
   }
 

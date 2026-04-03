@@ -108,12 +108,20 @@ class RoomView extends GetView<RoomController> {
                   ],
                 ),
                 child: Obx(() {
+                  final isHost = controller.isHost.value;
+                  final hasEnoughPlayers = controller.players.length >= 2;
+                  final isStarting = controller.isStarting.value;
+
                   return SizedBox(
                     width: double.infinity,
                     height: 52,
                     child: ElevatedButton(
-                      onPressed: null,
-                      child: controller.isStarting.value
+                      onPressed: isStarting
+                          ? null
+                          : isHost && hasEnoughPlayers
+                              ? controller.startGame
+                              : null,
+                      child: isStarting
                           ? const Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -130,7 +138,11 @@ class RoomView extends GetView<RoomController> {
                               ],
                             )
                           : Text(
-                              'Waiting for players... (${controller.players.length}/2 min)',
+                              isHost
+                                  ? hasEnoughPlayers
+                                      ? 'Start Game'
+                                      : 'Waiting for players... (${controller.players.length}/2 min)'
+                                  : 'Waiting for host to start...',
                             ),
                     ),
                   );

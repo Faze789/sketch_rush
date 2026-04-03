@@ -43,15 +43,9 @@ class GameTurnModel {
       wordChoices: (json['word_choices'] as List?)?.cast<String>() ?? [],
       chosenWord: json['chosen_word'] as String?,
       wordHint: json['word_hint'] as String?,
-      startedAt: json['started_at'] != null
-          ? DateTime.parse(json['started_at'] as String)
-          : null,
-      endsAt: json['ends_at'] != null
-          ? DateTime.parse(json['ends_at'] as String)
-          : null,
-      endedAt: json['ended_at'] != null
-          ? DateTime.parse(json['ended_at'] as String)
-          : null,
+      startedAt: DateTime.tryParse(json['started_at'] as String? ?? ''),
+      endsAt: DateTime.tryParse(json['ends_at'] as String? ?? ''),
+      endedAt: DateTime.tryParse(json['ended_at'] as String? ?? ''),
       guessersTotal: json['guessers_total'] as int? ?? 0,
       correctGuesses: json['correct_guesses'] as int? ?? 0,
       drawerScore: json['drawer_score'] as int? ?? 0,

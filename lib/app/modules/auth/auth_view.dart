@@ -358,9 +358,10 @@ class _LoginPageState extends State<_LoginPage> {
                         ? null
                         : () async {
                             final name = nameCtrl.text.trim();
-                            if (name.isEmpty) {
-                              Get.snackbar(
-                                  'Oops', 'Please enter a display name');
+                            final nameError =
+                                controller.validateDisplayName(name);
+                            if (nameError != null) {
+                              Get.snackbar('Oops', nameError);
                               return;
                             }
                             final success =

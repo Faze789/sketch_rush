@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/constants/supabase_constants.dart';
 import 'supabase_provider.dart';
@@ -76,15 +77,20 @@ class RealtimeProvider {
     if (_roomChannel == null) return;
     final completer = Completer<void>();
     _roomChannel!.subscribe((status, [error]) {
-      if ((status == RealtimeSubscribeStatus.subscribed ||
-              status == RealtimeSubscribeStatus.channelError) &&
+      if (status == RealtimeSubscribeStatus.subscribed &&
           !completer.isCompleted) {
+        completer.complete();
+      } else if (status == RealtimeSubscribeStatus.channelError &&
+          !completer.isCompleted) {
+        debugPrint('Room channel subscription error: $error');
         completer.complete();
       }
     });
     await completer.future.timeout(
       const Duration(seconds: 5),
-      onTimeout: () {},
+      onTimeout: () {
+        debugPrint('Room channel subscription timed out');
+      },
     );
   }
 
@@ -132,13 +138,15 @@ class RealtimeProvider {
         completer.complete();
       } else if (status == RealtimeSubscribeStatus.channelError &&
           !completer.isCompleted) {
-        completer.complete(); // Don't block forever on error
+        debugPrint('Game channel subscription error: $error');
+        completer.complete();
       }
     });
-    // Wait for subscription to be confirmed, with a timeout
     await completer.future.timeout(
       const Duration(seconds: 5),
-      onTimeout: () {}, // Proceed anyway after 5s
+      onTimeout: () {
+        debugPrint('Game channel subscription timed out');
+      },
     );
   }
 
@@ -146,7 +154,11 @@ class RealtimeProvider {
     required String event,
     required Map<String, dynamic> payload,
   }) async {
-    await _gameChannel?.sendBroadcastMessage(
+    if (_gameChannel == null) {
+      debugPrint('Warning: broadcast("$event") called but game channel is null');
+      return;
+    }
+    await _gameChannel!.sendBroadcastMessage(
       event: event,
       payload: payload,
     );

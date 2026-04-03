@@ -56,12 +56,9 @@ class RoomPlayerModel {
       correctGuesses: json['correct_guesses'] as int? ?? 0,
       drawingsDone: json['drawings_done'] as int? ?? 0,
       roundsWon: json['rounds_won'] as int? ?? 0,
-      joinedAt: json['joined_at'] != null
-          ? DateTime.parse(json['joined_at'] as String)
-          : DateTime.now(),
-      leftAt: json['left_at'] != null
-          ? DateTime.parse(json['left_at'] as String)
-          : null,
+      joinedAt: DateTime.tryParse(json['joined_at'] as String? ?? '') ??
+          DateTime.now(),
+      leftAt: DateTime.tryParse(json['left_at'] as String? ?? ''),
     );
   }
 

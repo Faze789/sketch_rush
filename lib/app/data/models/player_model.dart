@@ -23,7 +23,7 @@ class PlayerModel {
 
   factory PlayerModel.fromJson(Map<String, dynamic> json) {
     return PlayerModel(
-      id: json['id'] as String,
+      id: json['id'] as String? ?? '',
       displayName: json['display_name'] as String? ?? 'Player',
       avatarIndex: json['avatar_index'] as int? ?? 0,
       avatarColor: json['avatar_color'] as String? ?? '#6C5CE7',
@@ -31,9 +31,8 @@ class PlayerModel {
       gamesWon: json['games_won'] as int? ?? 0,
       totalScore: json['total_score'] as int? ?? 0,
       bestScore: json['best_score'] as int? ?? 0,
-      createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'] as String)
-          : DateTime.now(),
+      createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
+          DateTime.now(),
     );
   }
 

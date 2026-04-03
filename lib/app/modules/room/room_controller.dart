@@ -45,11 +45,20 @@ class RoomController extends GetxController {
       return;
     }
     isLoading.value = true;
-    await _fetchRoom();
-    await _fetchPlayers();
-    await _setupRealtime();
-    _startPlayerPolling();
-    isLoading.value = false;
+    try {
+      await _fetchRoom();
+      await _fetchPlayers();
+      await _setupRealtime();
+      _startPlayerPolling();
+    } catch (e) {
+      debugPrint('RoomController initialization error: $e');
+      Get.snackbar('Error', 'Failed to load room. Please try again.');
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Get.offAllNamed(AppRoutes.lobby);
+      });
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   Future<void> _fetchRoom() async {
@@ -156,8 +165,8 @@ class RoomController extends GetxController {
   @override
   void onClose() {
     _pollTimer?.cancel();
-    _realtimeProvider.untrackPresence();
-    _realtimeProvider.disposeRoomChannel();
+    _realtimeProvider.untrackPresence().catchError((_) {});
+    _realtimeProvider.disposeRoomChannel().catchError((_) {});
     super.onClose();
   }
 }

@@ -73,15 +73,12 @@ class RoomModel {
       currentRound: json['current_round'] as int? ?? 0,
       currentTurn: json['current_turn'] as int? ?? 0,
       currentDrawerId: json['current_drawer_id'] as String?,
-      gameStartedAt: json['game_started_at'] != null
-          ? DateTime.parse(json['game_started_at'] as String)
-          : null,
-      gameEndedAt: json['game_ended_at'] != null
-          ? DateTime.parse(json['game_ended_at'] as String)
-          : null,
-      createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'] as String)
-          : DateTime.now(),
+      gameStartedAt:
+          DateTime.tryParse(json['game_started_at'] as String? ?? ''),
+      gameEndedAt:
+          DateTime.tryParse(json['game_ended_at'] as String? ?? ''),
+      createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
+          DateTime.now(),
       hostName: json['host_name'] as String?,
       currentPlayers: json['current_players'] as int?,
     );

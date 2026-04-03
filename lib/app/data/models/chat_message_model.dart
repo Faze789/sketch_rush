@@ -30,9 +30,8 @@ class ChatMessageModel {
       content: json['content'] as String? ?? '',
       isCorrect: json['is_correct'] as bool? ?? false,
       scoreAwarded: json['score_awarded'] as int? ?? 0,
-      createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'] as String)
-          : DateTime.now(),
+      createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
+          DateTime.now(),
     );
   }
 

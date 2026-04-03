@@ -11,7 +11,7 @@ class RoomProvider {
       'list_public_rooms',
       params: {'p_limit': limit, 'p_offset': offset},
     );
-    return result.cast<Map<String, dynamic>>();
+    return result.whereType<Map<String, dynamic>>().toList();
   }
 
   Future<RoomModel> createRoom(Map<String, dynamic> roomData) async {

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'supabase_provider.dart';
 
@@ -15,16 +16,19 @@ class GameProvider {
       ...?params,
     };
 
-    final response = await SupabaseProvider.functions.invoke(
-      'game-engine',
-      body: body,
-    );
+    final response = await SupabaseProvider.functions
+        .invoke('game-engine', body: body)
+        .timeout(const Duration(seconds: 15));
 
     final data = response.data;
     if (data is Map<String, dynamic>) {
       return data;
     } else if (data is String) {
-      return jsonDecode(data) as Map<String, dynamic>;
+      try {
+        return jsonDecode(data) as Map<String, dynamic>;
+      } on FormatException catch (e) {
+        return {'error': 'Invalid JSON response: ${e.message}'};
+      }
     }
     return {'error': 'Unexpected response type: ${data.runtimeType}'};
   }

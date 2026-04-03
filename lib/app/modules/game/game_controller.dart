@@ -91,12 +91,20 @@ class GameController extends GetxController {
       });
       return;
     }
-    await _fetchRoom();
-    await _fetchPlayers();
-    // Await channel subscription before proceeding to ensure broadcasts are received
-    await _setupGameChannel();
-    // Initialize state from DB in case we missed the turn_start broadcast
-    await _initializeFromRoom();
+    try {
+      await _fetchRoom();
+      await _fetchPlayers();
+      // Await channel subscription before proceeding to ensure broadcasts are received
+      await _setupGameChannel();
+      // Initialize state from DB in case we missed the turn_start broadcast
+      await _initializeFromRoom();
+    } catch (e) {
+      debugPrint('GameController initialization error: $e');
+      Get.snackbar('Error', 'Failed to join game. Please try again.');
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Get.offAllNamed(AppRoutes.lobby);
+      });
+    }
   }
 
   Future<void> _fetchRoom() async {
@@ -456,7 +464,13 @@ class GameController extends GetxController {
         word: word,
       );
     } catch (e) {
-      Get.snackbar('Error', 'Failed to select word');
+      // Rollback optimistic update on failure
+      _wordAlreadySelected = false;
+      currentWord.value = '';
+      phase.value = GamePhase.wordSelection;
+      drawingController.isEnabled.value = false;
+      _stopCountdown();
+      Get.snackbar('Error', 'Failed to select word. Please try again.');
     }
   }
 
@@ -520,10 +534,14 @@ class GameController extends GetxController {
     }
   }
 
-  void leaveGame() {
+  Future<void> leaveGame() async {
     final pid = playerId;
     if (pid == null) return;
-    _roomProvider.leaveRoom(roomId: roomId, playerId: pid);
+    try {
+      await _roomProvider.leaveRoom(roomId: roomId, playerId: pid);
+    } catch (e) {
+      debugPrint('Error leaving room: $e');
+    }
     Get.offAllNamed(AppRoutes.lobby);
   }
 
@@ -557,10 +575,14 @@ class GameController extends GetxController {
       final ratio = elapsed / totalTurnSeconds.value;
       if (ratio >= GameConstants.firstHintAt && !_firstHintSent) {
         _firstHintSent = true;
-        requestHint();
+        requestHint().catchError((_) {
+          _firstHintSent = false;
+        });
       } else if (ratio >= GameConstants.secondHintAt && !_secondHintSent) {
         _secondHintSent = true;
-        requestHint();
+        requestHint().catchError((_) {
+          _secondHintSent = false;
+        });
       }
     }
   }
@@ -603,7 +625,7 @@ class GameController extends GetxController {
     _stopCountdown();
     _stopWordSelectionTimer();
     _cancelRecovery();
-    _realtimeProvider.disposeGameChannel();
+    _realtimeProvider.disposeGameChannel().catchError((_) {});
     super.onClose();
   }
 }
